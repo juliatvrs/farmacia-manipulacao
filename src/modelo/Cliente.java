@@ -12,8 +12,12 @@ public class Cliente extends Pessoa {
     }
 
     // [POLIMORFISMO] método sobrescrito: exibe os dados do cliente
+    // CPF exibido parcialmente (só os dois últimos dígitos) para reduzir a
+    // exposição dos dados do cliente; o CPF completo continua guardado
+    // no objeto e é usado nas buscas
     @Override
     public String exibirDados() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        String cpfMascarado = "***.***.***-" + getCpf().substring(9);
+        return "Cliente | id: " + getId() + " | nome: " + getNome() + " | cpf: " + cpfMascarado + " | telefone: " + getTelefone();
     }
 }
