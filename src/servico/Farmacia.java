@@ -1,9 +1,15 @@
 package servico;
 
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import modelo.MateriaPrima;
 import modelo.Pedido;
 import modelo.Pessoa;
+import modelo.Cliente;
+import modelo.Farmaceutico;
 
 /**
  * Centraliza as listas do sistema, as operações de gerenciamento e a
@@ -23,41 +29,157 @@ public class Farmacia {
 
     // ===== JÚLIA: pessoas e carregamento geral =====
 
+    // [ENCAPSULAMENTO] todo cadastro passa por aqui, para a regra do CPF único valer
+    // para qualquer pessoa adicionada à lista (RN04); a mensagem de erro não mostra
+    // dados da pessoa já cadastrada, para não expor informações do cliente (RNF03)
     public void cadastrarPessoa(Pessoa p) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (p == null) {
+            throw new IllegalArgumentException("A pessoa não pode ser nula.");
+        }
+        if (buscarPessoa(p.getCpf()) != null) {
+            throw new IllegalArgumentException("Já existe uma pessoa cadastrada com esse CPF.");
+        }
+        pessoas.add(p);
     }
 
+    // [ENCAPSULAMENTO] a lista de pessoas é privada, então a busca por CPF passa por aqui;
+    // o CPF recebido é limpo porque o CPF guardado em cada pessoa só tem números
     public Pessoa buscarPessoa(String cpf) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (cpf == null) {
+            return null;
+        }
+        String cpfLimpo = cpf.replaceAll("\\D", "");
+        for (Pessoa p : pessoas) {
+            if (p.getCpf().equals(cpfLimpo)) {
+                return p;
+            }
+        }
+        return null;
     }
 
+    // [ENCAPSULAMENTO] a edição passa por aqui para a regra do CPF único (RN04) continuar
+    // valendo: o CPF novo não pode pertencer a outra pessoa; a mensagem de erro não
+    // mostra dados de ninguém (RNF03)
     public void editarPessoa(Pessoa p) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (p == null) {
+            throw new IllegalArgumentException("A pessoa não pode ser nula.");
+        }
+        int posicao = -1;
+        for (int i = 0; i < pessoas.size(); i++) {
+            if (pessoas.get(i).getId() == p.getId()) {
+                posicao = i;
+                break;
+            }
+        }
+        if (posicao == -1) {
+            throw new IllegalArgumentException("Pessoa não encontrada.");
+        }
+        Pessoa donaDoCpf = buscarPessoa(p.getCpf());
+        if (donaDoCpf != null && donaDoCpf.getId() != p.getId()) {
+            throw new IllegalArgumentException("Já existe outra pessoa cadastrada com esse CPF.");
+        }
+        pessoas.set(posicao, p);
     }
 
+    // [ENCAPSULAMENTO] a remoção passa por aqui para impedir apagar uma pessoa que já tem
+    // pedidos, senão o histórico de pedidos (RF11) ficaria apontando para alguém que não existe mais
     public void removerPessoa(int id) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        Pessoa alvo = null;
+        for (Pessoa p : pessoas) {
+            if (p.getId() == id) {
+                alvo = p;
+                break;
+            }
+        }
+        if (alvo == null) {
+            throw new IllegalArgumentException("Pessoa não encontrada.");
+        }
+        for (Pedido pedido : pedidos) {
+            boolean ehCliente = pedido.getCliente() != null && pedido.getCliente().getId() == id;
+            boolean ehFarmaceutico = pedido.getFarmaceutico() != null && pedido.getFarmaceutico().getId() == id;
+            if (ehCliente || ehFarmaceutico) {
+                throw new IllegalArgumentException("Não é possível remover uma pessoa que possui pedidos registrados.");
+            }
+        }
+        pessoas.remove(alvo);
     }
 
+    // [ENCAPSULAMENTO] devolve uma cópia da lista, e não a lista interna, para quem
+    // chamar não conseguir adicionar ou remover pessoas por fora da Farmacia
+    // (assim as regras, como o CPF único, não são contornadas)
     public ArrayList<Pessoa> listarPessoas() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        return new ArrayList<>(pessoas);
     }
 
-    // carrega primeiro pessoas e matérias-primas, depois os pedidos (que dependem dos dois)
+    // [RNF04] lê do disco todos os dados do sistema; é chamado pela Main ao iniciar o programa.
+    // A ordem importa: primeiro pessoas e matérias-primas, depois os pedidos, pois cada
+    // pedido aponta para um cliente, um farmacêutico e matérias-primas que já precisam estar na memória
     public void carregarDados() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        carregarPessoas();
+        // TODO (Júlia): ativar quando a parte do Vítor for juntada na principal
+        // carregarMateriasPrimas();
+        // TODO (Júlia): ativar quando a parte do Jair for juntada na principal
+        // carregarPedidos();
     }
 
+    // [RNF04] grava no disco todos os dados do sistema; é chamado pela Main ao sair do
+    // programa, para que o que foi cadastrado na sessão continue disponível na próxima
     public void salvarDados() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        salvarPessoas();
+        // TODO (Júlia): ativar quando a parte do Vítor for juntada na principal
+        // salvarMateriasPrimas();
+        // TODO (Júlia): ativar quando a parte do Jair for juntada na principal
+        // salvarPedidos();
     }
 
+    // [RNF04] lê dados/pessoas.txt e recria as pessoas na lista; se o arquivo ainda não
+    // existe (primeira execução), começa com a lista vazia; linha estragada é ignorada
+    // para um erro no arquivo não impedir o programa de abrir
     private void carregarPessoas() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        File arquivo = new File(ARQUIVO_PESSOAS);
+        if (!arquivo.exists()) {
+            return;
+        }
+        try (Scanner leitor = new Scanner(arquivo, "UTF-8")) {
+            while (leitor.hasNextLine()) {
+                String linha = leitor.nextLine();
+                if (linha.trim().isEmpty()) {
+                    continue;
+                }
+                String[] campos = linha.split(";");
+                try {
+                    int id = Integer.parseInt(campos[1]);
+                    if (campos[0].equals("CLIENTE")) {
+                        cadastrarPessoa(new Cliente(id, campos[2], campos[3], campos[4]));
+                    } else if (campos[0].equals("FARMACEUTICO")) {
+                        cadastrarPessoa(new Farmaceutico(id, campos[2], campos[3], campos[4], campos[5]));
+                    }
+                } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Uma linha inválida de pessoas.txt foi ignorada.");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao carregar as pessoas.");
+        }
     }
 
+    // [RNF04] grava as pessoas em dados/pessoas.txt, uma por linha; o arquivo é
+    // sobrescrito a cada gravação para não duplicar registros; o tipo (CLIENTE ou
+    // FARMACEUTICO) vai no começo da linha para o carregarPessoas saber qual objeto criar
     private void salvarPessoas() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        try (PrintWriter escritor = new PrintWriter(ARQUIVO_PESSOAS, "UTF-8")) {
+            for (Pessoa p : pessoas) {
+                String linha = p.getId() + ";" + p.getNome() + ";" + p.getCpf() + ";" + p.getTelefone();
+                if (p instanceof Farmaceutico) {
+                    Farmaceutico f = (Farmaceutico) p;
+                    escritor.println("FARMACEUTICO;" + linha + ";" + f.getCrf());
+                } else {
+                    escritor.println("CLIENTE;" + linha);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar as pessoas.");
+        }
     }
 
     // ===== VÍTOR: matérias-primas =====
