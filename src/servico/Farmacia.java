@@ -78,7 +78,18 @@ public class Farmacia {
         if (donaDoCpf != null && donaDoCpf.getId() != p.getId()) {
             throw new IllegalArgumentException("Já existe outra pessoa cadastrada com esse CPF.");
         }
-        pessoas.set(posicao, p);
+        // copia os dados para o objeto que já está na lista (em vez de trocá-lo), assim os
+        // pedidos que apontam para essa pessoa passam a enxergar os dados atualizados
+        Pessoa existente = pessoas.get(posicao);
+        if (existente.getClass() != p.getClass()) {
+            throw new IllegalArgumentException("O tipo da pessoa não pode ser alterado.");
+        }
+        existente.setNome(p.getNome());
+        existente.setCpf(p.getCpf());
+        existente.setTelefone(p.getTelefone());
+        if (existente instanceof Farmaceutico) {
+            ((Farmaceutico) existente).setCrf(((Farmaceutico) p).getCrf());
+        }
     }
 
     // [ENCAPSULAMENTO] a remoção passa por aqui para impedir apagar uma pessoa que já tem
