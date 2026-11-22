@@ -59,7 +59,7 @@ public abstract class Pessoa {
 
     // [ENCAPSULAMENTO] guarda o CPF só com números e exige 11 dígitos; assim
     // "123.456.789-09" e "12345678909" viram o mesmo valor, o que permite
-    // comparar e buscar por CPF e garantir que ele seja único
+    // comparar e buscar por CPF e garantir que ele seja único (RN04)
     public void setCpf(String cpf) {
         if (cpf == null || cpf.trim().isEmpty()) {
             throw new IllegalArgumentException("O CPF não pode ser vazio.");

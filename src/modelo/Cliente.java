@@ -13,7 +13,7 @@ public class Cliente extends Pessoa {
 
     // [POLIMORFISMO] método sobrescrito: exibe os dados do cliente
     // CPF exibido parcialmente (só os dois últimos dígitos) para reduzir a
-    // exposição dos dados do cliente; o CPF completo continua guardado
+    // exposição dos dados do cliente (RNF03); o CPF completo continua guardado
     // no objeto e é usado nas buscas
     @Override
     public String exibirDados() {

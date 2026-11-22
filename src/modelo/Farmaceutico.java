@@ -17,7 +17,7 @@ public class Farmaceutico extends Pessoa {
 
     // [POLIMORFISMO] método sobrescrito: exibe os dados do farmacêutico
     // CPF exibido parcialmente (só os dois últimos dígitos) para reduzir a
-    // exposição dos dados; o CPF completo continua guardado no objeto
+    // exposição dos dados (RNF03); o CPF completo continua guardado no objeto
     @Override
     public String exibirDados() {
         String cpfMascarado = "***.***.***-" + getCpf().substring(9);
