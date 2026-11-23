@@ -195,20 +195,73 @@ public class Farmacia {
 
     // ===== VÍTOR: matérias-primas =====
 
+    // [ENCAPSULAMENTO] centraliza o cadastro na Farmacia para impedir objeto nulo ou ID duplicado
     public void cadastrarMateriaPrima(MateriaPrima mp) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (mp == null) {
+            throw new IllegalArgumentException("A matéria-prima não pode ser nula.");
+        }
+        for (MateriaPrima existente : materiasPrimas) {
+            if (existente.getId() == mp.getId()) {
+                throw new IllegalArgumentException("Já existe uma matéria-prima cadastrada com esse ID.");
+            }
+        }
+        materiasPrimas.add(mp);
     }
 
+    // [ENCAPSULAMENTO] devolve uma cópia da lista interna para proteger o estoque contra alterações externas
     public ArrayList<MateriaPrima> listarMateriasPrimas() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        return new ArrayList<>(materiasPrimas);
     }
 
+    // [RNF04] lê dados/materias_primas.txt ao iniciar o sistema; se ainda não existir, inicia com lista vazia
     private void carregarMateriasPrimas() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        File arquivo = new File(ARQUIVO_MATERIAS_PRIMAS);
+        if (!arquivo.exists()) {
+            return;
+        }
+        try (Scanner leitor = new Scanner(arquivo, "UTF-8")) {
+            while (leitor.hasNextLine()) {
+                String linha = leitor.nextLine();
+                if (linha.trim().isEmpty()) {
+                    continue;
+                }
+                String[] campos = linha.split(";");
+                try {
+                    int id = Integer.parseInt(campos[0]);
+                    String nome = campos[1];
+                    double quantidadeEstoque = Double.parseDouble(campos[2]);
+                    String unidadeMedida = campos[3];
+                    double custoPorUnidade = Double.parseDouble(campos[4]);
+                    double limiteAlerta = Double.parseDouble(campos[5]);
+
+                    cadastrarMateriaPrima(new MateriaPrima(id, nome, quantidadeEstoque, unidadeMedida, custoPorUnidade, limiteAlerta));
+                } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Uma linha inválida de materias_primas.txt foi ignorada.");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao carregar as matérias-primas.");
+        }
     }
 
+    // [RNF04] grava todas as matérias-primas em dados/materias_primas.txt usando ';' como separador
     private void salvarMateriasPrimas() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        File arquivo = new File(ARQUIVO_MATERIAS_PRIMAS);
+        if (arquivo.getParentFile() != null) {
+            arquivo.getParentFile().mkdirs();
+        }
+        try (PrintWriter escritor = new PrintWriter(arquivo, "UTF-8")) {
+            for (MateriaPrima mp : materiasPrimas) {
+                escritor.println(mp.getId() + ";"
+                        + mp.getNome() + ";"
+                        + mp.getQuantidadeEstoque() + ";"
+                        + mp.getUnidadeMedida() + ";"
+                        + mp.getCustoPorUnidade() + ";"
+                        + mp.getLimiteAlerta());
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar as matérias-primas.");
+        }
     }
 
     // ===== JAIR: pedidos =====
