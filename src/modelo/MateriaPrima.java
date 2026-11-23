@@ -6,7 +6,7 @@ package modelo;
  */
 public class MateriaPrima {
 
-    // [ENCAPSULAMENTO] atributos privados, acessados apenas por getters e setters
+    // [ENCAPSULAMENTO] atributos privados para proteger a integridade dos dados do estoque
     private int id;
     private String nome;
     private double quantidadeEstoque;
@@ -14,6 +14,7 @@ public class MateriaPrima {
     private double custoPorUnidade;
     private double limiteAlerta;
 
+    // Construtor delega aos setters para garantir que nenhum objeto nasça com dados inválidos
     public MateriaPrima(int id, String nome, double quantidadeEstoque, String unidadeMedida, double custoPorUnidade, double limiteAlerta) {
         setId(id);
         setNome(nome);
@@ -23,24 +24,36 @@ public class MateriaPrima {
         setLimiteAlerta(limiteAlerta);
     }
 
+    // Verifica se o insumo atingiu ou caiu abaixo do limite mínimo para alertar reposição (RF08)
     public boolean verificarEstoqueBaixo() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        return this.quantidadeEstoque <= this.limiteAlerta;
     }
 
+    // Garante que a quantidade solicitada é positiva e existe disponível antes de emitir pedido (RF09)
     public boolean temEstoqueSuficiente(double qtd) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        return qtd > 0 && this.quantidadeEstoque >= qtd;
     }
 
+    // Desconta a quantidade usada na fórmula do estoque atual, bloqueando baixa inválida (RF07)
     public void darBaixaEstoque(double qtd) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (qtd <= 0) {
+            throw new IllegalArgumentException("A quantidade para baixa deve ser maior que zero.");
+        }
+        if (!temEstoqueSuficiente(qtd)) {
+            throw new IllegalArgumentException("Estoque insuficiente para a matéria-prima: " + this.nome);
+        }
+        this.quantidadeEstoque -= qtd;
     }
 
     public int getId() {
         return id;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] rejeita IDs nulos ou negativos para manter identificação única válida
     public void setId(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("O ID da matéria-prima deve ser maior que zero.");
+        }
         this.id = id;
     }
 
@@ -48,17 +61,23 @@ public class MateriaPrima {
         return nome;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] impede cadastro de insumo sem identificação textual
     public void setNome(String nome) {
-        this.nome = nome;
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome da matéria-prima não pode ser vazio.");
+        }
+        this.nome = nome.trim();
     }
 
     public double getQuantidadeEstoque() {
         return quantidadeEstoque;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] impede estoque físico negativo no sistema
     public void setQuantidadeEstoque(double quantidadeEstoque) {
+        if (quantidadeEstoque < 0) {
+            throw new IllegalArgumentException("A quantidade em estoque não pode ser negativa.");
+        }
         this.quantidadeEstoque = quantidadeEstoque;
     }
 
@@ -66,17 +85,23 @@ public class MateriaPrima {
         return unidadeMedida;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] exige unidade de medida (ex: g, mg, ml) para cálculo proporcional correto
     public void setUnidadeMedida(String unidadeMedida) {
-        this.unidadeMedida = unidadeMedida;
+        if (unidadeMedida == null || unidadeMedida.trim().isEmpty()) {
+            throw new IllegalArgumentException("A unidade de medida não pode ser vazia.");
+        }
+        this.unidadeMedida = unidadeMedida.trim();
     }
 
     public double getCustoPorUnidade() {
         return custoPorUnidade;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] rejeita custo zero ou negativo para não distorcer o preço final da fórmula
     public void setCustoPorUnidade(double custoPorUnidade) {
+        if (custoPorUnidade <= 0) {
+            throw new IllegalArgumentException("O custo por unidade deve ser maior que zero.");
+        }
         this.custoPorUnidade = custoPorUnidade;
     }
 
@@ -84,8 +109,19 @@ public class MateriaPrima {
         return limiteAlerta;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] impede limite de alerta negativo
     public void setLimiteAlerta(double limiteAlerta) {
+        if (limiteAlerta < 0) {
+            throw new IllegalArgumentException("O limite de alerta não pode ser negativo.");
+        }
         this.limiteAlerta = limiteAlerta;
+    }
+
+    // Facilita a exibição formatada nas listagens do menu da Main
+    @Override
+    public String toString() {
+        String alerta = verificarEstoqueBaixo() ? " [ESTOQUE BAIXO]" : "";
+        return String.format("ID: %d | %s | Estoque: %.2f %s | Custo: R$ %.2f/%s | Limite: %.2f%s",
+                id, nome, quantidadeEstoque, unidadeMedida, custoPorUnidade, unidadeMedida, limiteAlerta, alerta);
     }
 }

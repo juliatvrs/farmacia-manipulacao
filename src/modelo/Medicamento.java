@@ -3,37 +3,44 @@ package modelo;
 import java.util.ArrayList;
 
 /**
- * [ABSTRAÇÃO] Classe abstrata: define o que todo medicamento manipulado deve
- * fazer (calcular o preço da fórmula) sem dizer como, pois cada forma
- * farmacêutica calcula de um jeito.
+ * [ABSTRAÇÃO] Classe abstrata: define a estrutura e o comportamento base de todo
+ * medicamento manipulado, deixando o cálculo final do preço para cada forma farmacêutica.
  * Responsável: Vítor
  */
 public abstract class Medicamento {
 
-    // [ENCAPSULAMENTO] atributos privados, acessados apenas por getters e setters
+    // [ENCAPSULAMENTO] atributos privados protegidos contra acesso direto
     private int id;
     private String nome;
     private String descricaoReceita;
-    // o medicamento é composto por itens de fórmula (matéria-prima + quantidade)
+    // Composição: um medicamento é formado por um ou mais itens de fórmula (RN02)
     private ArrayList<ItemFormula> itens = new ArrayList<>();
 
+    // Construtor utiliza os setters para validar os dados desde a instanciação
     public Medicamento(int id, String nome, String descricaoReceita) {
         setId(id);
         setNome(nome);
         setDescricaoReceita(descricaoReceita);
     }
 
-    // método concreto: igual para todos os tipos de medicamento
+    // Método concreto: adiciona um ingrediente validado à composição da fórmula
     public void adicionarItem(ItemFormula item) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (item == null) {
+            throw new IllegalArgumentException("O item da fórmula não pode ser nulo.");
+        }
+        this.itens.add(item);
     }
 
-    // método concreto: soma o custo de todos os itens da fórmula
+    // Método concreto: soma o custo proporcional de todas as matérias-primas usadas
     public double calcularCustoItens() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        double total = 0.0;
+        for (ItemFormula item : this.itens) {
+            total += item.calcularCustoProporcional();
+        }
+        return total;
     }
 
-    // [POLIMORFISMO] método abstrato: cada subclasse implementa o seu cálculo
+    // [POLIMORFISMO] método abstrato: obriga cada subclasse a implementar sua própria regra de preço
     public abstract double calcularPrecoFormula();
 
     public ArrayList<ItemFormula> getItens() {
@@ -44,8 +51,11 @@ public abstract class Medicamento {
         return id;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] rejeita IDs nulos ou negativos
     public void setId(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("O ID do medicamento deve ser maior que zero.");
+        }
         this.id = id;
     }
 
@@ -53,17 +63,30 @@ public abstract class Medicamento {
         return nome;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] exige nome válido para identificar a fórmula manipulada
     public void setNome(String nome) {
-        this.nome = nome;
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome do medicamento não pode ser vazio.");
+        }
+        this.nome = nome.trim();
     }
 
     public String getDescricaoReceita() {
         return descricaoReceita;
     }
 
-    // [ENCAPSULAMENTO] TODO: validar o valor e lançar IllegalArgumentException se for inválido
+    // [ENCAPSULAMENTO] exige a descrição da receita conforme RF04
     public void setDescricaoReceita(String descricaoReceita) {
-        this.descricaoReceita = descricaoReceita;
+        if (descricaoReceita == null || descricaoReceita.trim().isEmpty()) {
+            throw new IllegalArgumentException("A descrição da receita não pode ser vazia.");
+        }
+        this.descricaoReceita = descricaoReceita.trim();
+    }
+
+    // Facilita a exibição resumida do medicamento no pedido
+    @Override
+    public String toString() {
+        return String.format("ID: %d | %s (%s) | Receita: %s | Preço: R$ %.2f",
+                id, nome, this.getClass().getSimpleName(), descricaoReceita, calcularPrecoFormula());
     }
 }
