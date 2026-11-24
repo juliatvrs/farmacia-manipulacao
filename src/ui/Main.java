@@ -1,17 +1,20 @@
 package ui;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
-import modelo.Cliente;
-import modelo.Farmaceutico;
-import modelo.Medicamento;
-import modelo.Pessoa;
-import servico.Farmacia;
 import modelo.Capsula;
+import modelo.Cliente;
 import modelo.Creme;
+import modelo.Farmaceutico;
 import modelo.ItemFormula;
 import modelo.MateriaPrima;
+import modelo.Medicamento;
+import modelo.Pedido;
+import modelo.Pessoa;
 import modelo.Xarope;
+import servico.Farmacia;
 
 /**
  * Interface do sistema: o menu em loop no console.
@@ -438,7 +441,216 @@ public class Main {
 
     // ===== JAIR: pedidos =====
 
+    // [RNF02] submenu de pedidos em loop; captura IllegalArgumentException das validações
+    // de Pedido e Farmacia para exibir a mensagem de erro sem encerrar o programa
     private static void menuPedidos(Scanner scanner, Farmacia farmacia) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        int opcao = -1;
+        while (opcao != 0) {
+            System.out.println("\n=== PEDIDOS ===");
+            System.out.println("1 - Registrar pedido");
+            System.out.println("2 - Emitir pedido (baixar estoque)");
+            System.out.println("3 - Histórico de pedidos do cliente");
+            System.out.println("4 - Atualizar status de pedido");
+            System.out.println("0 - Voltar");
+            opcao = lerInteiro(scanner, "Escolha: ");
+            try {
+                switch (opcao) {
+                    case 1:
+                        opcaoRegistrarPedido(scanner, farmacia);
+                        break;
+                    case 2:
+                        opcaoEmitirPedido(scanner, farmacia);
+                        break;
+                    case 3:
+                        opcaoHistoricoCliente(scanner, farmacia);
+                        break;
+                    case 4:
+                        opcaoAtualizarStatusPedido(scanner, farmacia);
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        System.out.println("Opção inválida.");
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Erro: " + e.getMessage());
+            }
+        }
+    }
+
+    // Registra um novo pedido vinculando cliente, farmacêutico e um ou mais medicamentos montados (RN02)
+    private static void opcaoRegistrarPedido(Scanner scanner, Farmacia farmacia) {
+        int id = lerInteiro(scanner, "ID do pedido: ");
+
+        System.out.print("CPF do cliente: ");
+        Pessoa pCliente = farmacia.buscarPessoa(scanner.nextLine());
+        if (!(pCliente instanceof Cliente)) {
+            throw new IllegalArgumentException("Cliente não encontrado com o CPF informado.");
+        }
+
+        System.out.print("CPF do farmacêutico responsável: ");
+        Pessoa pFarmaceutico = farmacia.buscarPessoa(scanner.nextLine());
+        if (!(pFarmaceutico instanceof Farmaceutico)) {
+            throw new IllegalArgumentException("Farmacêutico não encontrado com o CPF informado.");
+        }
+
+        System.out.print("Data de realização (dd/MM/aaaa ou Enter para hoje): ");
+        String data = scanner.nextLine().trim();
+        if (data.isEmpty()) {
+            data = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        }
+
+        Pedido pedido = new Pedido(id, data, "Aguardando manipulação", (Cliente) pCliente, (Farmaceutico) pFarmaceutico);
+
+        // Reutiliza montarMedicamento() para montar uma ou mais fórmulas no mesmo pedido
+        boolean adicionarMais = true;
+        while (adicionarMais) {
+            Medicamento med = montarMedicamento(scanner, farmacia);
+            pedido.adicionarMedicamento(med);
+
+            int continuar = lerInteiro(scanner, "Adicionar outro medicamento ao pedido? 1 - Sim, 2 - Não: ");
+            if (continuar != 1) {
+                adicionarMais = false;
+            }
+        }
+
+        farmacia.registrarPedido(pedido);
+        System.out.printf("Pedido #%d registrado com sucesso! Valor total: R$ %.2f%n",
+                pedido.getId(), pedido.getValorTotal());
+
+        int emitirAgora = lerInteiro(scanner, "Deseja emitir o pedido agora (dar baixa no estoque)? 1 - Sim, 2 - Não: ");
+        if (emitirAgora == 1) {
+            pedido.emitirPedido();
+            System.out.println("Pedido emitido! Status atual: " + pedido.getStatus());
+            alertarEstoqueBaixoDoPedido(pedido);
+        }
+    }
+
+    // [RF07 / RF09] localiza um pedido do cliente e executa emitirPedido(), validando e descontando o estoque
+    private static void opcaoEmitirPedido(Scanner scanner, Farmacia farmacia) {
+        Pedido alvo = selecionarPedidoDoCliente(scanner, farmacia, "ID do pedido a emitir: ");
+        if (alvo == null) {
+            return;
+        }
+        alvo.emitirPedido();
+        System.out.println("Pedido #" + alvo.getId() + " emitido com sucesso! Novo status: " + alvo.getStatus());
+        alertarEstoqueBaixoDoPedido(alvo);
+    }
+
+    // [RF11] exibe todos os pedidos realizados por um cliente, detalhando medicamentos e matérias-primas
+    private static void opcaoHistoricoCliente(Scanner scanner, Farmacia farmacia) {
+        System.out.print("CPF do cliente: ");
+        String cpf = scanner.nextLine();
+        Pessoa pessoa = farmacia.buscarPessoa(cpf);
+        if (!(pessoa instanceof Cliente)) {
+            throw new IllegalArgumentException("Cliente não encontrado com o CPF informado.");
+        }
+
+        System.out.println("\nHistórico de: " + pessoa.exibirDados());
+        ArrayList<Pedido> historico = farmacia.listarPedidosCliente(cpf);
+        if (historico.isEmpty()) {
+            System.out.println("Nenhum pedido encontrado para este cliente.");
+            return;
+        }
+
+        for (Pedido pedido : historico) {
+            System.out.println("--------------------------------------------------");
+            System.out.println(pedido);
+            for (Medicamento m : pedido.getMedicamentos()) {
+                System.out.println("  * " + m);
+                for (ItemFormula item : m.getItens()) {
+                    System.out.println("      - " + item);
+                }
+            }
+        }
+    }
+
+    // Permite avançar o fluxo de produção/entrega ou cancelar um pedido do cliente
+    private static void opcaoAtualizarStatusPedido(Scanner scanner, Farmacia farmacia) {
+        Pedido alvo = selecionarPedidoDoCliente(scanner, farmacia, "ID do pedido para atualizar status: ");
+        if (alvo == null) {
+            return;
+        }
+
+        System.out.println("Status atual: " + alvo.getStatus());
+        System.out.println("Novo status:");
+        System.out.println("1 - Aguardando manipulação");
+        System.out.println("2 - Em manipulação (emite o pedido e dá baixa no estoque)");
+        System.out.println("3 - Pronto para retirada");
+        System.out.println("4 - Entregue");
+        System.out.println("5 - Cancelado");
+        int opcaoStatus = lerInteiro(scanner, "Escolha: ");
+
+        String novoStatus;
+        switch (opcaoStatus) {
+            case 1:
+                novoStatus = "Aguardando manipulação";
+                break;
+            case 2:
+                novoStatus = "Em manipulação";
+                break;
+            case 3:
+                novoStatus = "Pronto para retirada";
+                break;
+            case 4:
+                novoStatus = "Entregue";
+                break;
+            case 5:
+                novoStatus = "Cancelado";
+                break;
+            default:
+                throw new IllegalArgumentException("Opção de status inválida.");
+        }
+
+        // Garante que mudar de 'Aguardando manipulação' para 'Em manipulação' também dê baixa no estoque
+        if (novoStatus.equals("Em manipulação") && alvo.getStatus().equalsIgnoreCase("Aguardando manipulação")) {
+            alvo.emitirPedido();
+            System.out.println("Pedido emitido e status atualizado para: " + alvo.getStatus());
+            alertarEstoqueBaixoDoPedido(alvo);
+            return;
+        }
+
+        alvo.setStatus(novoStatus);
+        System.out.println("Status do pedido #" + alvo.getId() + " atualizado para: " + alvo.getStatus());
+    }
+
+    // Auxiliar para listar os pedidos de um cliente e selecionar um pelo ID
+    private static Pedido selecionarPedidoDoCliente(Scanner scanner, Farmacia farmacia, String promptId) {
+        System.out.print("CPF do cliente: ");
+        String cpf = scanner.nextLine();
+        Pessoa pessoa = farmacia.buscarPessoa(cpf);
+        if (!(pessoa instanceof Cliente)) {
+            throw new IllegalArgumentException("Cliente não encontrado com o CPF informado.");
+        }
+
+        ArrayList<Pedido> pedidosCliente = farmacia.listarPedidosCliente(cpf);
+        if (pedidosCliente.isEmpty()) {
+            System.out.println("Nenhum pedido encontrado para este cliente.");
+            return null;
+        }
+
+        for (Pedido p : pedidosCliente) {
+            System.out.println(p);
+        }
+
+        int idPedido = lerInteiro(scanner, promptId);
+        for (Pedido p : pedidosCliente) {
+            if (p.getId() == idPedido) {
+                return p;
+            }
+        }
+        throw new IllegalArgumentException("Pedido não encontrado com esse ID para o cliente informado.");
+    }
+
+    // [RF08] avisa logo após a baixa no estoque se alguma matéria-prima do pedido atingiu o limite de alerta
+    private static void alertarEstoqueBaixoDoPedido(Pedido pedido) {
+        for (Medicamento m : pedido.getMedicamentos()) {
+            for (ItemFormula item : m.getItens()) {
+                MateriaPrima mp = item.getMateriaPrima();
+                if (mp.verificarEstoqueBaixo()) {
+                    System.out.println("ALERTA DE ESTOQUE BAIXO: " + mp);
+                }
+            }
+        }
     }
 }

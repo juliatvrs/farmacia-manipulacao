@@ -1,15 +1,20 @@
 package servico;
 
-import java.util.ArrayList;
-import java.util.Scanner;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Scanner;
+import modelo.Capsula;
+import modelo.Cliente;
+import modelo.Creme;
+import modelo.Farmaceutico;
+import modelo.ItemFormula;
 import modelo.MateriaPrima;
+import modelo.Medicamento;
 import modelo.Pedido;
 import modelo.Pessoa;
-import modelo.Cliente;
-import modelo.Farmaceutico;
+import modelo.Xarope;
 
 /**
  * Centraliza as listas do sistema, as operações de gerenciamento e a
@@ -266,20 +271,199 @@ public class Farmacia {
 
     // ===== JAIR: pedidos =====
 
+    // [ENCAPSULAMENTO] centraliza o cadastro do pedido na Farmacia para validar ID único
+    // e garantir que o pedido contenha pelo menos um medicamento (RN02)
     public void registrarPedido(Pedido p) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (p == null) {
+            throw new IllegalArgumentException("O pedido não pode ser nulo.");
+        }
+        if (p.getMedicamentos().isEmpty()) {
+            throw new IllegalArgumentException("O pedido precisa conter pelo menos um medicamento.");
+        }
+        for (Pedido existente : pedidos) {
+            if (existente.getId() == p.getId()) {
+                throw new IllegalArgumentException("Já existe um pedido cadastrado com esse ID.");
+            }
+        }
+        p.calcularValorTotal();
+        pedidos.add(p);
     }
 
+    // [ENCAPSULAMENTO / RF11] consulta os pedidos de um cliente pelo CPF (normalizando pontuação,
+    // como em buscarPessoa) e retorna uma nova lista para proteger a coleção interna
     public ArrayList<Pedido> listarPedidosCliente(String cpf) {
-        throw new UnsupportedOperationException("TODO: implementar");
+        if (cpf == null || cpf.trim().isEmpty()) {
+            throw new IllegalArgumentException("O CPF do cliente não pode ser vazio.");
+        }
+        String cpfLimpo = cpf.replaceAll("\\D", "");
+        if (cpfLimpo.length() != 11) {
+            throw new IllegalArgumentException("O CPF deve ter 11 dígitos.");
+        }
+        ArrayList<Pedido> resultado = new ArrayList<>();
+        for (Pedido p : pedidos) {
+            if (p.getCliente() != null && p.getCliente().getCpf().equals(cpfLimpo)) {
+                resultado.add(p);
+            }
+        }
+        return resultado;
     }
 
-    // grava também os medicamentos e os itens de fórmula de cada pedido
+    // [RNF04] lê dados/pedidos.txt ao iniciar o sistema, reconstruindo cada Pedido,
+    // seus Medicamentos (Capsula, Creme ou Xarope) e seus ItemFormula vinculados às matérias-primas
     private void carregarPedidos() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        File arquivo = new File(ARQUIVO_PEDIDOS);
+        if (!arquivo.exists()) {
+            return;
+        }
+        try (Scanner leitor = new Scanner(arquivo, "UTF-8")) {
+            Pedido pedidoAtual = null;
+            Medicamento medicamentoAtual = null;
+
+            while (leitor.hasNextLine()) {
+                String linha = leitor.nextLine();
+                if (linha.trim().isEmpty()) {
+                    continue;
+                }
+                String[] campos = linha.split(";");
+                try {
+                    if (campos[0].equals("PEDIDO")) {
+                        // antes de iniciar um novo pedido, finaliza e registra o pedido anterior lido
+                        if (pedidoAtual != null && !pedidoAtual.getMedicamentos().isEmpty()) {
+                            pedidoAtual.calcularValorTotal();
+                            registrarPedido(pedidoAtual);
+                        }
+                        pedidoAtual = null;
+                        medicamentoAtual = null;
+
+                        int id = Integer.parseInt(campos[1]);
+                        String dataRealizacao = campos[2];
+                        String status = campos[3];
+                        Pessoa pCliente = buscarPessoa(campos[4]);
+                        Pessoa pFarmaceutico = buscarPessoa(campos[5]);
+
+                        if (!(pCliente instanceof Cliente) || !(pFarmaceutico instanceof Farmaceutico)) {
+                            System.out.println("Pedido ignorado em pedidos.txt: cliente ou farmacêutico não encontrado.");
+                            continue;
+                        }
+                        pedidoAtual = new Pedido(id, dataRealizacao, status, (Cliente) pCliente, (Farmaceutico) pFarmaceutico);
+
+                    } else if (campos[0].equals("MEDICAMENTO")) {
+                        if (pedidoAtual == null) {
+                            continue;
+                        }
+                        medicamentoAtual = null;
+
+                        String tipo = campos[1];
+                        int idMed = Integer.parseInt(campos[2]);
+                        String nomeMed = campos[3];
+                        String descricaoReceita = campos[4];
+
+                        if (tipo.equals("CAPSULA")) {
+                            int qtdCapsulas = Integer.parseInt(campos[5]);
+                            double custoCapsulaVazia = Double.parseDouble(campos[6]);
+                            medicamentoAtual = new Capsula(idMed, nomeMed, descricaoReceita, qtdCapsulas, custoCapsulaVazia);
+                        } else if (tipo.equals("CREME")) {
+                            double volumeMl = Double.parseDouble(campos[5]);
+                            double custoBase = Double.parseDouble(campos[6]);
+                            medicamentoAtual = new Creme(idMed, nomeMed, descricaoReceita, volumeMl, custoBase);
+                        } else if (tipo.equals("XAROPE")) {
+                            double volumeMl = Double.parseDouble(campos[5]);
+                            double custoFrasco = Double.parseDouble(campos[6]);
+                            medicamentoAtual = new Xarope(idMed, nomeMed, descricaoReceita, volumeMl, custoFrasco);
+                        }
+
+                        if (medicamentoAtual != null) {
+                            pedidoAtual.adicionarMedicamento(medicamentoAtual);
+                        }
+
+                    } else if (campos[0].equals("ITEM")) {
+                        if (pedidoAtual == null || medicamentoAtual == null) {
+                            continue;
+                        }
+                        int idMateriaPrima = Integer.parseInt(campos[1]);
+                        double quantidadeUtilizada = Double.parseDouble(campos[2]);
+
+                        MateriaPrima mp = null;
+                        for (MateriaPrima itemMp : listarMateriasPrimas()) {
+                            if (itemMp.getId() == idMateriaPrima) {
+                                mp = itemMp;
+                                break;
+                            }
+                        }
+                        if (mp == null) {
+                            throw new IllegalArgumentException("Matéria-prima não encontrada para o item.");
+                        }
+
+                        medicamentoAtual.adicionarItem(new ItemFormula(quantidadeUtilizada, mp));
+                        pedidoAtual.calcularValorTotal();
+                    }
+                } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+                    System.out.println("Uma linha inválida de pedidos.txt foi ignorada.");
+                }
+            }
+
+            // registra o último pedido lido ao chegar no fim do arquivo
+            if (pedidoAtual != null && !pedidoAtual.getMedicamentos().isEmpty()) {
+                pedidoAtual.calcularValorTotal();
+                registrarPedido(pedidoAtual);
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao carregar os pedidos.");
+        }
     }
 
+    // [RNF04] grava todos os pedidos, seus medicamentos e seus itens de fórmula em dados/pedidos.txt,
+    // respeitando a hierarquia de linhas definida no README para reconstrução na próxima execução
     private void salvarPedidos() {
-        throw new UnsupportedOperationException("TODO: implementar");
+        File arquivo = new File(ARQUIVO_PEDIDOS);
+        if (arquivo.getParentFile() != null) {
+            arquivo.getParentFile().mkdirs();
+        }
+        try (PrintWriter escritor = new PrintWriter(arquivo, "UTF-8")) {
+            for (Pedido p : pedidos) {
+                escritor.println("PEDIDO;"
+                        + p.getId() + ";"
+                        + p.getDataRealizacao() + ";"
+                        + p.getStatus() + ";"
+                        + p.getCliente().getCpf() + ";"
+                        + p.getFarmaceutico().getCpf());
+
+                for (Medicamento m : p.getMedicamentos()) {
+                    if (m instanceof Capsula) {
+                        Capsula c = (Capsula) m;
+                        escritor.println("MEDICAMENTO;CAPSULA;"
+                                + c.getId() + ";"
+                                + c.getNome() + ";"
+                                + c.getDescricaoReceita() + ";"
+                                + c.getQuantidadeCapsulas() + ";"
+                                + c.getCustoCapsulaVazia());
+                    } else if (m instanceof Creme) {
+                        Creme cr = (Creme) m;
+                        escritor.println("MEDICAMENTO;CREME;"
+                                + cr.getId() + ";"
+                                + cr.getNome() + ";"
+                                + cr.getDescricaoReceita() + ";"
+                                + cr.getVolumeMl() + ";"
+                                + cr.getCustoBase());
+                    } else if (m instanceof Xarope) {
+                        Xarope x = (Xarope) m;
+                        escritor.println("MEDICAMENTO;XAROPE;"
+                                + x.getId() + ";"
+                                + x.getNome() + ";"
+                                + x.getDescricaoReceita() + ";"
+                                + x.getVolumeMl() + ";"
+                                + x.getCustoFrasco());
+                    }
+
+                    for (ItemFormula item : m.getItens()) {
+                        escritor.println("ITEM;"
+                                + item.getMateriaPrima().getId() + ";"
+                                + item.getQuantidadeUtilizada());
+                    }
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar os pedidos.");
+        }
     }
 }
