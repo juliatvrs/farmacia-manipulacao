@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Farmacêutico responsável por manipular os pedidos.
- * Responsável: Júlia
  */
 // [HERANÇA] Farmaceutico herda os atributos e métodos de Pessoa
 public class Farmaceutico extends Pessoa {

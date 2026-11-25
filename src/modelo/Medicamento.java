@@ -5,7 +5,6 @@ import java.util.ArrayList;
 /**
  * [ABSTRAÇÃO] Classe abstrata: define a estrutura e o comportamento base de todo
  * medicamento manipulado, deixando o cálculo final do preço para cada forma farmacêutica.
- * Responsável: Vítor
  */
 public abstract class Medicamento {
 
@@ -23,7 +22,8 @@ public abstract class Medicamento {
         setDescricaoReceita(descricaoReceita);
     }
 
-    // Método concreto: adiciona um ingrediente validado à composição da fórmula
+    // Método concreto: fica na superclasse porque a regra de adicionar um ingrediente é 
+    // igual para qualquer forma farmacêutica, e assim Capsula, Creme e Xarope não repetem o código
     public void adicionarItem(ItemFormula item) {
         if (item == null) {
             throw new IllegalArgumentException("O item da fórmula não pode ser nulo.");
@@ -31,7 +31,8 @@ public abstract class Medicamento {
         this.itens.add(item);
     }
 
-    // Método concreto: soma o custo proporcional de todas as matérias-primas usadas
+    // Método concreto: as três formas farmacêuticas usam a mesma soma dos itens e só acrescentam o 
+    // custo da própria embalagem ou base, por isso a soma fica aqui (RF06 / RN03)
     public double calcularCustoItens() {
         double total = 0.0;
         for (ItemFormula item : this.itens) {
@@ -83,7 +84,7 @@ public abstract class Medicamento {
         this.descricaoReceita = descricaoReceita.trim();
     }
 
-    // Facilita a exibição resumida do medicamento no pedido
+    // Texto usado nas listagens de pedido e no histórico (RF11), para a Main não precisar montar a linha de cada medicamento
     @Override
     public String toString() {
         return String.format("ID: %d | %s (%s) | Receita: %s | Preço: R$ %.2f",

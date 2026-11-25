@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Medicamento manipulado na forma farmacêutica de creme dermatológico.
- * Responsável: Vítor
  */
 // [HERANÇA] Creme especializa Medicamento, herdando id, nome, descricaoReceita e a lista de itens
 public class Creme extends Medicamento {

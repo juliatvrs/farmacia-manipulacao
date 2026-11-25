@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Medicamento manipulado na forma farmacêutica líquida de xarope.
- * Responsável: Vítor
  */
 // [HERANÇA] Xarope especializa Medicamento, aproveitando id, nome, descricaoReceita e lista de itens
 public class Xarope extends Medicamento {

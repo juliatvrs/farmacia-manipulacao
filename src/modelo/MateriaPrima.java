@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Matéria-prima (princípio ativo ou reagente) controlada no estoque.
- * Responsável: Vítor
  */
 public class MateriaPrima {
 
@@ -117,7 +116,7 @@ public class MateriaPrima {
         this.limiteAlerta = limiteAlerta;
     }
 
-    // Facilita a exibição formatada nas listagens do menu da Main
+    // Texto usado nas listagens e nos alertas de estoque (RF02 / RF08), para a Main não precisar montar a linha de cada insumo
     @Override
     public String toString() {
         String alerta = verificarEstoqueBaixo() ? " [ESTOQUE BAIXO]" : "";

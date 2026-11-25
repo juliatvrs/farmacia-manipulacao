@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Item de uma fórmula: associa uma matéria-prima à quantidade utilizada dela no medicamento.
- * Responsável: Vítor
  */
 public class ItemFormula {
 
@@ -45,7 +44,7 @@ public class ItemFormula {
         this.materiaPrima = materiaPrima;
     }
 
-    // Facilita a exibição detalhada dos ingredientes de cada medicamento
+    // Texto usado no histórico de pedidos (RF11) para mostrar cada ingrediente com sua quantidade e custo
     @Override
     public String toString() {
         return String.format("%s - %.2f %s (R$ %.2f)",

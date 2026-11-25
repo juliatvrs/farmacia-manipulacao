@@ -5,7 +5,6 @@ import java.util.HashMap;
 
 /**
  * Pedido de um cliente, atendido por um farmacêutico, com um ou mais medicamentos.
- * Responsável: Jair
  */
 public class Pedido {
 
@@ -30,7 +29,7 @@ public class Pedido {
         this.valorTotal = 0.0;
     }
 
-    // Adiciona uma fórmula manipulada ao pedido e recalcula o valor total (RN02 / RN03)
+    // Adiciona o medicamento e recalcula o total na hora, para o valor do pedido nunca ficar desatualizado (RN03)
     public void adicionarMedicamento(Medicamento m) {
         if (m == null) {
             throw new IllegalArgumentException("O medicamento não pode ser nulo.");
@@ -148,7 +147,7 @@ public class Pedido {
         return status;
     }
 
-    // [ENCAPSULAMENTO] exige status válido e sem ';', pois o status é gravado em pedidos.txt
+    // [ENCAPSULAMENTO] exige status preenchido e sem ';', pois o status é gravado em pedidos.txt
     public void setStatus(String status) {
         if (status == null || status.trim().isEmpty()) {
             throw new IllegalArgumentException("O status do pedido não pode ser vazio.");

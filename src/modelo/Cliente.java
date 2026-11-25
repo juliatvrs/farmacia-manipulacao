@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Cliente da farmácia.
- * Responsável: Júlia
  */
 // [HERANÇA] Cliente herda os atributos e métodos de Pessoa
 public class Cliente extends Pessoa {

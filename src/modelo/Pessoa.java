@@ -3,7 +3,6 @@ package modelo;
 /**
  * [ABSTRAÇÃO] Classe abstrata: reúne o que todo cadastro de pessoa da farmácia
  * tem em comum, sem permitir criar uma "pessoa genérica".
- * Responsável: Júlia
  */
 public abstract class Pessoa {
 

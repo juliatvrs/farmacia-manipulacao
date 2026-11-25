@@ -19,7 +19,6 @@ import servico.Farmacia;
 /**
  * Interface do sistema: o menu em loop no console.
  * Todo o controle do sistema é acessado por aqui.
- * Cada pessoa edita apenas a sua seção, para evitar conflitos no Git.
  */
 public class Main {
 
@@ -63,7 +62,7 @@ public class Main {
         scanner.close();
     }
 
-    // ===== JÚLIA: menu principal, pessoas e leitura segura =====
+    // ===== Menu principal, pessoas e leitura segura =====
 
     // [RNF02] submenu de pessoas em loop até o usuário escolher voltar; erros de validação
     // lançados pela Farmacia e pelos setters são capturados aqui, mostrando a mensagem
@@ -232,7 +231,7 @@ public class Main {
         }
     }
 
-    // ===== VÍTOR: matérias-primas e montagem de medicamento =====
+    // ===== Matérias-primas e montagem de medicamento =====
 
     // [RNF02] submenu de controle de insumos em loop; exceções de validação dos setters e
     // da Farmacia são tratadas aqui para exibir mensagens claras sem encerrar o programa
@@ -271,7 +270,7 @@ public class Main {
         }
     }
 
-    // [RF07] cadastra um novo princípio ativo ou reagente com ID sequencial automático
+    // [RF02] cadastra um novo princípio ativo ou reagente com ID sequencial automático
     private static void opcaoCadastrarMateriaPrima(Scanner scanner, Farmacia farmacia) {
         System.out.print("Nome da matéria-prima: ");
         String nome = scanner.nextLine();
@@ -286,7 +285,7 @@ public class Main {
         System.out.println("Matéria-prima cadastrada com sucesso (ID " + id + ").");
     }
 
-    // [RF07] exibe todas as matérias-primas cadastradas no estoque
+    // [RF02] exibe todas as matérias-primas cadastradas no estoque
     private static void opcaoListarMateriasPrimas(Farmacia farmacia) {
         ArrayList<MateriaPrima> lista = farmacia.listarMateriasPrimas();
         if (lista.isEmpty()) {
@@ -298,7 +297,7 @@ public class Main {
         }
     }
 
-    // [RF07] soma uma nova quantidade comprada ao estoque atual de um insumo existente
+    // [RF02] soma uma nova quantidade comprada ao estoque atual de um insumo existente
     private static void opcaoReporEstoque(Scanner scanner, Farmacia farmacia) {
         opcaoListarMateriasPrimas(farmacia);
         if (farmacia.listarMateriasPrimas().isEmpty()) {
@@ -412,7 +411,7 @@ public class Main {
         return maior + 1;
     }
 
-    // localiza uma matéria-prima pelo ID na lista retornada pela Farmacia
+    // a Farmacia só devolve uma cópia da lista, então a busca por ID é feita aqui, na camada de interface
     private static MateriaPrima buscarMateriaPrimaPorId(Farmacia farmacia, int id) {
         for (MateriaPrima mp : farmacia.listarMateriasPrimas()) {
             if (mp.getId() == id) {
@@ -435,7 +434,7 @@ public class Main {
         }
     }
 
-    // ===== JAIR: pedidos =====
+    // ===== Pedidos =====
 
     // [RNF02] submenu de pedidos em loop; captura IllegalArgumentException das validações
     // de Pedido e Farmacia para exibir a mensagem de erro sem encerrar o programa
@@ -474,7 +473,7 @@ public class Main {
         }
     }
 
-    // Registra um novo pedido vinculando cliente, farmacêutico e um ou mais medicamentos montados (RN02)
+    // Registra um novo pedido vinculando cliente, farmacêutico e um ou mais medicamentos montados (RN01)
     private static void opcaoRegistrarPedido(Scanner scanner, Farmacia farmacia) {
         int id = lerInteiro(scanner, "ID do pedido: ");
 
@@ -561,7 +560,8 @@ public class Main {
         }
     }
 
-    // Permite avançar o fluxo de produção/entrega ou cancelar um pedido do cliente
+    // A mudança de status passa por aqui para aplicar as regras do fluxo (RF10) 
+    // e garantir que a baixa de estoque aconteça só na emissão (RF07)
     private static void opcaoAtualizarStatusPedido(Scanner scanner, Farmacia farmacia) {
         Pedido alvo = selecionarPedidoDoCliente(scanner, farmacia, "ID do pedido para atualizar status: ");
         if (alvo == null) {
@@ -629,7 +629,8 @@ public class Main {
         System.out.println("Status do pedido #" + alvo.getId() + " atualizado para: " + alvo.getStatus());
     }
 
-    // Auxiliar para listar os pedidos de um cliente e selecionar um pelo ID
+    // Auxiliar das opções de emitir e atualizar status: localiza o pedido sempre do mesmo jeito, 
+    // procurando só entre os pedidos do cliente informado
     private static Pedido selecionarPedidoDoCliente(Scanner scanner, Farmacia farmacia, String promptId) {
         System.out.print("CPF do cliente: ");
         String cpf = scanner.nextLine();

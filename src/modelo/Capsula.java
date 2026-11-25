@@ -2,7 +2,6 @@ package modelo;
 
 /**
  * Medicamento manipulado na forma farmacêutica de cápsulas.
- * Responsável: Vítor
  */
 // [HERANÇA] Capsula especializa Medicamento, reaproveitando id, nome, descricaoReceita e lista de itens
 public class Capsula extends Medicamento {

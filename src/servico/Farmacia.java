@@ -19,11 +19,11 @@ import modelo.Xarope;
 /**
  * Centraliza as listas do sistema, as operações de gerenciamento e a
  * leitura/escrita dos arquivos .txt.
- * Cada pessoa edita apenas a sua seção, para evitar conflitos no Git.
  */
 public class Farmacia {
 
-    // caminhos dos arquivos de dados (relativos à pasta do projeto)
+    // caminhos fixos dos três arquivos .txt, relativos à pasta do projeto, 
+    // para a gravação e a leitura usarem sempre os mesmos locais
     private static final String ARQUIVO_PESSOAS = "dados/pessoas.txt";
     private static final String ARQUIVO_MATERIAS_PRIMAS = "dados/materias_primas.txt";
     private static final String ARQUIVO_PEDIDOS = "dados/pedidos.txt";
@@ -32,7 +32,7 @@ public class Farmacia {
     private ArrayList<MateriaPrima> materiasPrimas = new ArrayList<>();
     private ArrayList<Pedido> pedidos = new ArrayList<>();
 
-    // ===== JÚLIA: pessoas e carregamento geral =====
+    // ===== Pessoas e carregamento geral =====
 
     // [ENCAPSULAMENTO] todo cadastro passa por aqui, para a regra do CPF único valer
     // para qualquer pessoa adicionada à lista (RN04); a mensagem de erro não mostra
@@ -194,7 +194,7 @@ public class Farmacia {
         }
     }
 
-    // ===== VÍTOR: matérias-primas =====
+    // ===== Matérias-primas =====
 
     // [ENCAPSULAMENTO] centraliza o cadastro na Farmacia para impedir objeto nulo ou ID duplicado
     public void cadastrarMateriaPrima(MateriaPrima mp) {
@@ -265,10 +265,10 @@ public class Farmacia {
         }
     }
 
-    // ===== JAIR: pedidos =====
+    // ===== Pedidos =====
 
     // [ENCAPSULAMENTO] centraliza o cadastro do pedido na Farmacia para validar ID único
-    // e garantir que o pedido contenha pelo menos um medicamento (RN02)
+    // e garantir que o pedido contenha pelo menos um medicamento (RN01)
     public void registrarPedido(Pedido p) {
         if (p == null) {
             throw new IllegalArgumentException("O pedido não pode ser nulo.");
