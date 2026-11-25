@@ -3,53 +3,27 @@
 Trabalho final de Programação Orientada a Objetos 1, UEMG Divinópolis, 4º período, 2026.
 Grupo 8: Jair Silveira Mesquita, Júlia Tavares Magalhães e Vitor Oliveira Chaves.
 
-## Como abrir e executar
+Sistema de console em Java para uma farmácia de manipulação: cadastra pessoas e matérias-primas, registra pedidos com medicamentos manipulados, emite o pedido com baixa de estoque e grava os dados em arquivos .txt.
 
-1. Abra a pasta do projeto no VS Code (com a extensão Java instalada).
-2. Execute a classe `src/ui/Main.java`.
-3. Os arquivos de dados ficam na pasta `dados/`, e o programa é executado a partir da raiz do projeto.
+## Como executar
+
+Requisito: JDK instalado.
+
+Abra a pasta do projeto no VS Code, com a extensão Java, e execute `src/ui/Main.java`. Execute a partir da raiz do projeto, porque os arquivos são lidos e gravados em `dados/` por caminho relativo.
 
 ## Estrutura
 
 | Pasta | Conteúdo |
 |---|---|
 | `src/modelo` | Pessoa, Cliente, Farmaceutico, Pedido, Medicamento, Capsula, Creme, Xarope, ItemFormula, MateriaPrima |
-| `src/servico` | Farmacia (listas, operações e leitura/escrita dos .txt) |
+| `src/servico` | Farmacia (listas, regras de negócio e leitura/escrita dos .txt) |
 | `src/ui` | Main (menu em loop no console) |
-| `dados` | Arquivos .txt com os dados |
-| `docs` | Diagrama de classes, tabela de rastreabilidade e declaração de uso de IA |
-
-## Divisão do trabalho
-
-| Quem | Modelo | Farmacia e Main | Arquivo |
-|---|---|---|---|
-| Vítor | MateriaPrima, Medicamento, Capsula, Creme, Xarope, ItemFormula | Matérias-primas e montagem de medicamento | materias_primas.txt |
-| Júlia | Pessoa, Cliente, Farmaceutico | Pessoas, carregarDados, salvarDados, main e menu principal | pessoas.txt |
-| Jair | Pedido | Pedidos | pedidos.txt |
-
-Cada pessoa edita apenas os métodos da sua seção em `Farmacia.java` e `Main.java` (veja os comentários `===== NOME: ... =====`).
-
-## Combinados de código
-
-- Indentação correta, nomes em português e em camelCase.
-- Comentários explicando por que o trecho existe, e não só o que ele faz.
-- Marcar onde cada pilar foi aplicado: `[ABSTRAÇÃO]`, `[ENCAPSULAMENTO]`, `[HERANÇA]` e `[POLIMORFISMO]`.
-- Setters validam o valor e lançam `IllegalArgumentException` se ele for inválido. O menu trata o erro sem encerrar o programa.
-- Os métodos do esqueleto lançam `UnsupportedOperationException` até serem implementados.
-- Os construtores já chamam os setters, para a validação valer na criação dos objetos.
-
-## Fluxo no Git
-
-1. Cada pessoa trabalha na sua branch:
-    - `estoque-medicamentos`: Vítor
-    - `pessoas`: Júlia
-    - `pedidos`: Jair
-2. Ao terminar um trecho, junta na branch principal e avisa o grupo para todos atualizarem.
-3. Antes de começar a trabalhar, sempre atualizar a branch com o que está na principal.
+| `dados` | Arquivos .txt de exemplo |
+| `docs` | Diagrama de classes e tabela de rastreabilidade |
 
 ## Formato dos arquivos .txt
 
-Um registro por linha, campos separados por ponto e vírgula.
+Codificação UTF-8, um registro por linha, campos separados por ponto e vírgula.
 
 `pessoas.txt`
 
@@ -72,12 +46,21 @@ MEDICAMENTO;CAPSULA;id;nome;descricaoReceita;quantidadeCapsulas;custoCapsulaVazi
 ITEM;idMateriaPrima;quantidadeUtilizada
 MEDICAMENTO;CREME;id;nome;descricaoReceita;volumeMl;custoBase
 ITEM;idMateriaPrima;quantidadeUtilizada
+MEDICAMENTO;XAROPE;id;nome;descricaoReceita;volumeMl;custoFrasco
+ITEM;idMateriaPrima;quantidadeUtilizada
 ```
 
-## Entregas
+## Documentação
 
-- Código-fonte completo e comentado.
-- Arquivos .txt de exemplo com dados já cadastrados.
-- Diagrama de classes e justificativa das mudanças em relação à Etapa 1.
-- Tabela de rastreabilidade (arquivo e linha de cada item).
-- Declaração de uso de ferramentas de IA, se houver.
+- [Diagrama de classes](docs/diagrama-classes.pdf)
+- [Tabela de rastreabilidade](docs/rastreabilidade.pdf)
+
+## Divisão do trabalho
+
+Cada integrante desenvolveu uma parte em uma branch própria, integrada na `main`.
+
+| Integrante | Modelo | Farmacia e Main | Arquivo de dados | Branch |
+|---|---|---|---|---|
+| Vitor | MateriaPrima, Medicamento, Capsula, Creme, Xarope, ItemFormula | Matérias-primas e montagem de medicamento | materias_primas.txt | `estoque-medicamentos` |
+| Júlia | Pessoa, Cliente, Farmaceutico | Pessoas, carregamento e gravação dos dados, menu principal | pessoas.txt | `pessoas` |
+| Jair | Pedido | Pedidos | pedidos.txt | `pedidos` |
