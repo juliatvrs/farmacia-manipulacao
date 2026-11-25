@@ -132,20 +132,16 @@ public class Farmacia {
     // pedido aponta para um cliente, um farmacêutico e matérias-primas que já precisam estar na memória
     public void carregarDados() {
         carregarPessoas();
-        // TODO (Júlia): ativar quando a parte do Vítor for juntada na principal
-        // carregarMateriasPrimas();
-        // TODO (Júlia): ativar quando a parte do Jair for juntada na principal
-        // carregarPedidos();
+        carregarMateriasPrimas();
+        carregarPedidos();
     }
 
     // [RNF04] grava no disco todos os dados do sistema; é chamado pela Main ao sair do
     // programa, para que o que foi cadastrado na sessão continue disponível na próxima
     public void salvarDados() {
         salvarPessoas();
-        // TODO (Júlia): ativar quando a parte do Vítor for juntada na principal
-        // salvarMateriasPrimas();
-        // TODO (Júlia): ativar quando a parte do Jair for juntada na principal
-        // salvarPedidos();
+        salvarMateriasPrimas();
+        salvarPedidos();
     }
 
     // [RNF04] lê dados/pessoas.txt e recria as pessoas na lista; se o arquivo ainda não
@@ -280,6 +276,12 @@ public class Farmacia {
         if (p.getMedicamentos().isEmpty()) {
             throw new IllegalArgumentException("O pedido precisa conter pelo menos um medicamento.");
         }
+        // [RN02] todo medicamento do pedido precisa ter pelo menos um item na fórmula
+        for (Medicamento m : p.getMedicamentos()) {
+            if (m.getItens().isEmpty()) {
+                throw new IllegalArgumentException("O medicamento '" + m.getNome() + "' precisa ter pelo menos um item na fórmula.");
+            }
+        }
         for (Pedido existente : pedidos) {
             if (existente.getId() == p.getId()) {
                 throw new IllegalArgumentException("Já existe um pedido cadastrado com esse ID.");
@@ -308,6 +310,20 @@ public class Farmacia {
         return resultado;
     }
 
+    // [RNF04] registra um pedido reconstruído do arquivo; se ele violar uma regra (ex.: RN02 ou ID repetido),
+    // apenas esse pedido é ignorado, sem derrubar o carregamento nem contaminar o pedido seguinte
+    private void registrarPedidoLido(Pedido pedido) {
+        if (pedido == null || pedido.getMedicamentos().isEmpty()) {
+            return;
+        }
+        try {
+            pedido.calcularValorTotal();
+            registrarPedido(pedido);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Um pedido inválido de pedidos.txt foi ignorado.");
+        }
+    }
+
     // [RNF04] lê dados/pedidos.txt ao iniciar o sistema, reconstruindo cada Pedido,
     // seus Medicamentos (Capsula, Creme ou Xarope) e seus ItemFormula vinculados às matérias-primas
     private void carregarPedidos() {
@@ -328,10 +344,7 @@ public class Farmacia {
                 try {
                     if (campos[0].equals("PEDIDO")) {
                         // antes de iniciar um novo pedido, finaliza e registra o pedido anterior lido
-                        if (pedidoAtual != null && !pedidoAtual.getMedicamentos().isEmpty()) {
-                            pedidoAtual.calcularValorTotal();
-                            registrarPedido(pedidoAtual);
-                        }
+                        registrarPedidoLido(pedidoAtual);
                         pedidoAtual = null;
                         medicamentoAtual = null;
 
@@ -403,10 +416,7 @@ public class Farmacia {
             }
 
             // registra o último pedido lido ao chegar no fim do arquivo
-            if (pedidoAtual != null && !pedidoAtual.getMedicamentos().isEmpty()) {
-                pedidoAtual.calcularValorTotal();
-                registrarPedido(pedidoAtual);
-            }
+            registrarPedidoLido(pedidoAtual);
         } catch (IOException e) {
             System.out.println("Erro ao carregar os pedidos.");
         }
