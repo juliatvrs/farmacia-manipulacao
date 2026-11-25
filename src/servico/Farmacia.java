@@ -179,7 +179,13 @@ public class Farmacia {
     // sobrescrito a cada gravação para não duplicar registros; o tipo (CLIENTE ou
     // FARMACEUTICO) vai no começo da linha para o carregarPessoas saber qual objeto criar
     private void salvarPessoas() {
-        try (PrintWriter escritor = new PrintWriter(ARQUIVO_PESSOAS, "UTF-8")) {
+        // cria a pasta dados/ se ela ainda não existir (ex.: repositório recém-clonado),
+        // senão a primeira gravação falharia
+        File arquivo = new File(ARQUIVO_PESSOAS);
+        if (arquivo.getParentFile() != null) {
+            arquivo.getParentFile().mkdirs();
+        }
+        try (PrintWriter escritor = new PrintWriter(arquivo, "UTF-8")) {
             for (Pessoa p : pessoas) {
                 String linha = p.getId() + ";" + p.getNome() + ";" + p.getCpf() + ";" + p.getTelefone();
                 if (p instanceof Farmaceutico) {
