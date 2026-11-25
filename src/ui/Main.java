@@ -45,16 +45,12 @@ public class Main {
                     farmacia.salvarDados();
                     break;
                 case 2:
-                    // TODO (Júlia): ativar quando a parte do Vítor for juntada na principal
-                    // menuMateriasPrimas(scanner, farmacia);
-                    // farmacia.salvarDados();
-                    System.out.println("Em desenvolvimento.");
+                    menuMateriasPrimas(scanner, farmacia);
+                    farmacia.salvarDados();
                     break;
                 case 3:
-                    // TODO (Júlia): ativar quando a parte do Jair for juntada na principal
-                    // menuPedidos(scanner, farmacia);
-                    // farmacia.salvarDados();
-                    System.out.println("Em desenvolvimento.");
+                    menuPedidos(scanner, farmacia);
+                    farmacia.salvarDados();
                     break;
                 case 0:
                     farmacia.salvarDados();
@@ -500,7 +496,7 @@ public class Main {
             data = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         }
 
-        Pedido pedido = new Pedido(id, data, "Aguardando manipulação", (Cliente) pCliente, (Farmaceutico) pFarmaceutico);
+        Pedido pedido = new Pedido(id, data, "Recebido", (Cliente) pCliente, (Farmaceutico) pFarmaceutico);
 
         // Reutiliza montarMedicamento() para montar uma ou mais fórmulas no mesmo pedido
         boolean adicionarMais = true;
@@ -574,9 +570,9 @@ public class Main {
 
         System.out.println("Status atual: " + alvo.getStatus());
         System.out.println("Novo status:");
-        System.out.println("1 - Aguardando manipulação");
+        System.out.println("1 - Recebido");
         System.out.println("2 - Em manipulação (emite o pedido e dá baixa no estoque)");
-        System.out.println("3 - Pronto para retirada");
+        System.out.println("3 - Pronto");
         System.out.println("4 - Entregue");
         System.out.println("5 - Cancelado");
         int opcaoStatus = lerInteiro(scanner, "Escolha: ");
@@ -584,13 +580,13 @@ public class Main {
         String novoStatus;
         switch (opcaoStatus) {
             case 1:
-                novoStatus = "Aguardando manipulação";
+                novoStatus = "Recebido";
                 break;
             case 2:
                 novoStatus = "Em manipulação";
                 break;
             case 3:
-                novoStatus = "Pronto para retirada";
+                novoStatus = "Pronto";
                 break;
             case 4:
                 novoStatus = "Entregue";
@@ -602,8 +598,27 @@ public class Main {
                 throw new IllegalArgumentException("Opção de status inválida.");
         }
 
-        // Garante que mudar de 'Aguardando manipulação' para 'Em manipulação' também dê baixa no estoque
-        if (novoStatus.equals("Em manipulação") && alvo.getStatus().equalsIgnoreCase("Aguardando manipulação")) {
+        // [RF07] pedido já emitido não volta para 'Recebido': o estoque já foi descontado
+        // e uma nova emissão descontaria os insumos uma segunda vez
+        if (novoStatus.equals("Recebido") && !alvo.getStatus().equalsIgnoreCase("Recebido")) {
+            throw new IllegalArgumentException("Um pedido já emitido não pode voltar para 'Recebido', pois o estoque já foi descontado.");
+        }
+
+        // [RF07] a baixa só acontece em emitirPedido(): sem emitir, o pedido não pode avançar nem ser reativado
+        if (alvo.getStatus().equalsIgnoreCase("Recebido") && (novoStatus.equals("Pronto") || novoStatus.equals("Entregue"))) {
+            throw new IllegalArgumentException("Emita o pedido (status 'Em manipulação') antes de avançar, para o estoque ser descontado.");
+        }
+        if (alvo.getStatus().equalsIgnoreCase("Cancelado") && !novoStatus.equals("Cancelado")) {
+            throw new IllegalArgumentException("Um pedido cancelado não pode ser reativado.");
+        }
+
+        // [RF10] pedido entregue é um estado final: o fluxo termina na entrega
+        if (alvo.getStatus().equalsIgnoreCase("Entregue") && !novoStatus.equals("Entregue")) {
+            throw new IllegalArgumentException("Um pedido entregue não pode mudar de status.");
+        }
+
+        // Garante que mudar de 'Recebido' para 'Em manipulação' também dê baixa no estoque
+        if (novoStatus.equals("Em manipulação") && alvo.getStatus().equalsIgnoreCase("Recebido")) {
             alvo.emitirPedido();
             System.out.println("Pedido emitido e status atualizado para: " + alvo.getStatus());
             alertarEstoqueBaixoDoPedido(alvo);

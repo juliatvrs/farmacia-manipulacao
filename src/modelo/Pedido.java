@@ -57,9 +57,8 @@ public class Pedido {
         if (this.medicamentos.isEmpty()) {
             throw new IllegalArgumentException("Não é possível emitir um pedido sem medicamentos.");
         }
-        if (!this.status.equalsIgnoreCase("Aguardando manipulação")) {
-            throw new IllegalArgumentException(
-                    "Apenas pedidos com status 'Aguardando manipulação' podem ser emitidos (status atual: " + this.status + ").");
+        if (!this.status.equalsIgnoreCase("Recebido")) {
+            throw new IllegalArgumentException("Apenas pedidos com status 'Recebido' podem ser emitidos (status atual: " + this.status + ").");
         }
 
         // Primeira passada: acumula o consumo total por matéria-prima (caso dois medicamentos usem o mesmo insumo)
