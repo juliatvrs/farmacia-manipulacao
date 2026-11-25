@@ -1,5 +1,9 @@
 package modelo;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -120,15 +124,19 @@ public class Pedido {
         return dataRealizacao;
     }
 
-    // [ENCAPSULAMENTO] impede data vazia ou com ';', que quebraria o separador de campos de pedidos.txt
+    // [ENCAPSULAMENTO] só aceita data real no formato dd/MM/aaaa; o modo STRICT recusa dias
+    // inexistentes (ex.: 31/02), e esse formato também impede o ';' que quebraria o pedidos.txt
     public void setDataRealizacao(String dataRealizacao) {
         if (dataRealizacao == null || dataRealizacao.trim().isEmpty()) {
             throw new IllegalArgumentException("A data de realização do pedido não pode ser vazia.");
         }
-        if (dataRealizacao.contains(";")) {
-            throw new IllegalArgumentException("A data de realização não pode conter ponto e vírgula.");
+        String texto = dataRealizacao.trim();
+        try {
+            LocalDate.parse(texto, DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT));
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("A data de realização deve ser uma data válida no formato dd/MM/aaaa.");
         }
-        this.dataRealizacao = dataRealizacao.trim();
+        this.dataRealizacao = texto;
     }
 
     public double getValorTotal() {
