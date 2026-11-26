@@ -1,0 +1,6 @@
+1;Lactose;982.0;g;0.02;200.0
+2;Vitamina C;155.0;g;0.8;60.0
+3;Base de creme;1952.0;g;0.05;400.0
+4;Xarope base;2880.0;ml;0.01;500.0
+5;Ácido hialurônico;28.0;g;12.5;10.0
+6;Melatonina;15.0;g;4.0;20.0

@@ -1,0 +1,20 @@
+PEDIDO;1001;10/11/2026;Entregue;52998224725;11144477735
+MEDICAMENTO;CAPSULA;1;Cápsula de Vitamina C 500mg;1 cápsula ao dia, após o almoço;60;0.1
+ITEM;2;30.0
+ITEM;1;12.0
+PEDIDO;1002;12/11/2026;Pronto;39053344705;98765432100
+MEDICAMENTO;CREME;2;Creme de ácido hialurônico;Aplicar à noite no rosto limpo;50.0;8.0
+ITEM;5;2.0
+ITEM;3;48.0
+PEDIDO;1003;18/11/2026;Em manipulação;12345678909;11144477735
+MEDICAMENTO;XAROPE;3;Xarope expectorante infantil;5 ml a cada 8 horas por 5 dias;120.0;3.5
+ITEM;4;120.0
+MEDICAMENTO;CAPSULA;4;Cápsula de Vitamina C 500mg;1 cápsula ao dia pela manhã;30;0.1
+ITEM;2;15.0
+ITEM;1;6.0
+PEDIDO;1004;24/11/2026;Recebido;52998224725;98765432100
+MEDICAMENTO;CREME;5;Creme hidratante corporal;Aplicar após o banho;200.0;6.0
+ITEM;3;190.0
+PEDIDO;1005;20/11/2026;Cancelado;39053344705;11144477735
+MEDICAMENTO;CAPSULA;6;Cápsula de lactose;1 cápsula ao dia;30;0.1
+ITEM;1;10.0
