@@ -19,7 +19,7 @@ Abra a pasta do projeto no VS Code, com a extensão Java, e execute `src/ui/Main
 | `src/servico` | Farmacia (listas, regras de negócio e leitura/escrita dos .txt) |
 | `src/ui` | Main (menu em loop no console) |
 | `dados` | Arquivos .txt de exemplo |
-| `docs` | Diagrama de classes e tabela de rastreabilidade |
+| `docs` | Diagrama de classes, tabela de rastreabilidade e declaração de uso de IA |
 
 ## Formato dos arquivos .txt
 
@@ -54,6 +54,7 @@ ITEM;idMateriaPrima;quantidadeUtilizada
 
 - [Diagrama de classes](docs/diagrama-classes.pdf)
 - [Tabela de rastreabilidade](docs/rastreabilidade.pdf)
+- [Declaração de uso de IA](docs/declaracao-ia.pdf)
 
 ## Divisão do trabalho
 
